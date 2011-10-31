@@ -59,6 +59,8 @@ import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
+import static org.jboss.as.ejb3.EjbMessages.MESSAGES;
+import static org.jboss.as.ejb3.EjbLogger.ROOT_LOGGER;
 
 /**
  * File based persistent timer store.
@@ -72,7 +74,6 @@ public class FileTimerPersistence implements TimerPersistence, Service<FileTimer
     public static final ServiceName SERVICE_NAME = ServiceName.JBOSS.append("ejb3", "timerService", "fileTimerPersistence");
 
     private final boolean createIfNotExists;
-    private static final Logger logger = Logger.getLogger(FileTimerPersistence.class);
     private MarshallerFactory factory;
     private MarshallingConfiguration configuration;
     private final InjectedValue<TransactionManager> transactionManager = new InjectedValue<TransactionManager>();
@@ -107,14 +108,14 @@ public class FileTimerPersistence implements TimerPersistence, Service<FileTimer
         if (!baseDir.exists()) {
             if (createIfNotExists) {
                 if (!baseDir.mkdirs()) {
-                    throw new RuntimeException("Could not create timer file store directory " + baseDir);
+                    throw MESSAGES.failToCreateTimerFileStoreDir(baseDir);
                 }
             } else {
-                throw new RuntimeException("Timer file store directory " + baseDir + " does not exist");
+                throw MESSAGES.timerFileStoreDirNotExist(baseDir);
             }
         }
         if (!baseDir.isDirectory()) {
-            throw new RuntimeException("Timer file store directory " + baseDir + " is not a directory");
+            throw MESSAGES.invalidTimerFileStoreDir(baseDir);
         }
         started = true;
     }
@@ -195,7 +196,7 @@ public class FileTimerPersistence implements TimerPersistence, Service<FileTimer
             final File file = fileName(timerEntity.getTimedObjectId(), timerEntity.getId());
             if (file.exists()) {
                 if (!file.delete()) {
-                    logger.error("Could not remove persistent timer " + file);
+                    ROOT_LOGGER.failedToRemovePersistentTimer(file);
                 }
             }
         } finally {
@@ -250,7 +251,7 @@ public class FileTimerPersistence implements TimerPersistence, Service<FileTimer
                 //no timers exist yet
                 return timers;
             } else if (!file.isDirectory()) {
-                logger.error(file + " is not a directory, could not restore timers");
+                ROOT_LOGGER.failToRetoreTimers(file);
                 return timers;
             }
             Unmarshaller unmarshaller = factory.createUnmarshaller(configuration);
@@ -263,20 +264,20 @@ public class FileTimerPersistence implements TimerPersistence, Service<FileTimer
                     timers.put(entity.getId(), entity);
                     unmarshaller.finish();
                 } catch (Exception e) {
-                    logger.error("Could not restore timer from " + timerFile, e);
+                    ROOT_LOGGER.failToRetoreTimersFromFile(timerFile,e);
                 } finally {
                     if (in != null) {
                         try {
                             in.close();
                         } catch (IOException e) {
-                            logger.error("error closing file ", e);
+                            ROOT_LOGGER.failToCloseFile(e);
                         }
                     }
                 }
 
             }
         } catch (Exception e) {
-            logger.error("Could not restore timers for " + timedObjectId, e);
+            ROOT_LOGGER.failToRestoreTimersForObjectId(timedObjectId,e);
         }
         return timers;
     }
@@ -299,7 +300,7 @@ public class FileTimerPersistence implements TimerPersistence, Service<FileTimer
             File file = new File(dirName);
             if (!file.exists()) {
                 if (!file.mkdirs()) {
-                    logger.error("Could not create directory " + file + " to persist EJB timers.");
+                    ROOT_LOGGER.failToCreateDirectoryForPersistTimers(file);
                 }
             }
             directories.put(timedObjectId, dirName);
@@ -330,7 +331,7 @@ public class FileTimerPersistence implements TimerPersistence, Service<FileTimer
                 try {
                     fileOutputStream.close();
                 } catch (IOException e) {
-                    logger.error("IOException closing file ", e);
+                    ROOT_LOGGER.failToCloseFile(e);
                 }
             }
         }

@@ -1,23 +1,25 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
  *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
+ *  * JBoss, Home of Professional Open Source.
+ *  * Copyright 2011, Red Hat, Inc., and individual contributors
+ *  * as indicated by the @author tags. See the copyright.txt file in the
+ *  * distribution for a full listing of individual contributors.
+ *  *
+ *  * This is free software; you can redistribute it and/or modify it
+ *  * under the terms of the GNU Lesser General Public License as
+ *  * published by the Free Software Foundation; either version 2.1 of
+ *  * the License, or (at your option) any later version.
+ *  *
+ *  * This software is distributed in the hope that it will be useful,
+ *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ *  * Lesser General Public License for more details.
+ *  *
+ *  * You should have received a copy of the GNU Lesser General Public
+ *  * License along with this software; if not, write to the Free
+ *  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ *  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 package org.jboss.as.ejb3.timerservice;
 
@@ -35,7 +37,7 @@ import org.jboss.as.ejb3.timerservice.task.CalendarTimerTask;
 import org.jboss.as.ejb3.timerservice.task.TimerTask;
 import org.jboss.as.ejb3.timerservice.schedule.CalendarBasedTimeout;
 import org.jboss.logging.Logger;
-
+import static org.jboss.as.ejb3.EjbMessages.MESSAGES;
 /**
  * Represents a {@link javax.ejb.Timer} which is created out a calendar expression
  *
@@ -44,10 +46,6 @@ import org.jboss.logging.Logger;
  */
 public class CalendarTimer extends TimerImpl {
 
-    /**
-     * Logger
-     */
-    private static Logger logger = Logger.getLogger(CalendarTimer.class);
 
     /**
      * The calendar based timeout for this timer
@@ -138,7 +136,7 @@ public class CalendarTimer extends TimerImpl {
             TimeoutMethod timeoutMethodInfo = persistedCalendarTimer.getTimeoutMethod();
             this.timeoutMethod = this.getTimeoutMethod(timeoutMethodInfo);
             if (this.timeoutMethod == null) {
-                throw new IllegalStateException("Could not find timeout method: " + timeoutMethodInfo);
+                throw MESSAGES.failToFindTimeoutMethod(timeoutMethodInfo);
             }
         } else {
             this.autoTimer = false;
@@ -215,7 +213,7 @@ public class CalendarTimer extends TimerImpl {
 
     public Method getTimeoutMethod() {
         if (!this.autoTimer) {
-            throw new IllegalStateException("Cannot invoke getTimeoutMethod on a timer which is not an auto-timer");
+            throw MESSAGES.failToInvokegetTimeoutMethod();
         }
         return this.timeoutMethod;
     }
@@ -262,7 +260,7 @@ public class CalendarTimer extends TimerImpl {
         try {
             timeoutMethodDeclaringClass = Class.forName(declaringClass, false, timedObjectInvoker.getClassLoader());
         } catch (ClassNotFoundException cnfe) {
-            throw new RuntimeException("Could not load declaring class: " + declaringClass + " of timeout method", cnfe);
+            throw MESSAGES.failToLoadDeclaringClassOfTimeOut(declaringClass);
         }
 
         String timeoutMethodName = timeoutMethodInfo.getMethodName();

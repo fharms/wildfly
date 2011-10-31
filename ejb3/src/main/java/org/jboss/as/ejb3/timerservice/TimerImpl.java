@@ -1,23 +1,25 @@
 /*
- * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
  *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
+ *  * JBoss, Home of Professional Open Source.
+ *  * Copyright 2011, Red Hat, Inc., and individual contributors
+ *  * as indicated by the @author tags. See the copyright.txt file in the
+ *  * distribution for a full listing of individual contributors.
+ *  *
+ *  * This is free software; you can redistribute it and/or modify it
+ *  * under the terms of the GNU Lesser General Public License as
+ *  * published by the Free Software Foundation; either version 2.1 of
+ *  * the License, or (at your option) any later version.
+ *  *
+ *  * This software is distributed in the hope that it will be useful,
+ *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ *  * Lesser General Public License for more details.
+ *  *
+ *  * You should have received a copy of the GNU Lesser General Public
+ *  * License along with this software; if not, write to the Free
+ *  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ *  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 package org.jboss.as.ejb3.timerservice;
 
@@ -46,7 +48,8 @@ import org.jboss.as.ejb3.timerservice.persistence.TimerEntity;
 import org.jboss.as.ejb3.timerservice.task.TimerTask;
 import org.jboss.as.ejb3.timerservice.spi.TimedObjectInvoker;
 import org.jboss.invocation.InterceptorContext;
-import org.jboss.logging.Logger;
+import static org.jboss.as.ejb3.EjbMessages.MESSAGES;
+import static org.jboss.as.ejb3.EjbLogger.ROOT_LOGGER;
 
 /**
  * Implementation of EJB3.1 {@link Timer}
@@ -55,10 +58,6 @@ import org.jboss.logging.Logger;
  * @version $Revision: $
  */
 public class TimerImpl implements Timer {
-    /**
-     * Logger
-     */
-    private static final Logger logger = Logger.getLogger(TimerImpl.class);
 
     /**
      * Unique id for this timer instance
@@ -238,7 +237,7 @@ public class TimerImpl implements Timer {
 
         // for non-persistent timers throws an exception (mandated by EJB3 spec)
         if (this.persistent == false) {
-            throw new IllegalStateException("EJB3.1 Spec 18.2.6 Timer handles are only available for persistent timers.");
+            throw MESSAGES.invalidTimerHandlersForPersistentTimers("EJB3.1 Spec 18.2.6");
         }
         return this.handle;
     }
@@ -301,7 +300,7 @@ public class TimerImpl implements Timer {
         // first check the validity of the timer state
         this.assertTimerState();
         if (this.nextExpiration == null) {
-            throw new NoMoreTimeoutsException("No more timeouts for timer " + this);
+            throw MESSAGES.noMoreTimeoutForTimer(this);
         }
         return this.nextExpiration;
     }
@@ -332,7 +331,7 @@ public class TimerImpl implements Timer {
     @Override
     public ScheduleExpression getSchedule() throws IllegalStateException, EJBException {
         this.assertTimerState();
-        throw new IllegalStateException("Timer " + this + " is not a calendar based timer");
+        throw MESSAGES.invalidTimerNotCalendarBaseTimer(this);
     }
 
     /**
@@ -345,7 +344,7 @@ public class TimerImpl implements Timer {
         // first check the validity of the timer state
         this.assertTimerState();
         if (this.nextExpiration == null) {
-            throw new NoMoreTimeoutsException("No more timeouts for timer " + this);
+            throw MESSAGES.noMoreTimeoutForTimer(this);
         }
         long currentTimeInMillis = System.currentTimeMillis();
         long nextTimeoutInMillis = this.nextExpiration.getTime();
@@ -498,9 +497,9 @@ public class TimerImpl implements Timer {
      */
     protected void assertTimerState() {
         if (timerState == TimerState.EXPIRED)
-            throw new NoSuchObjectLocalException("Timer has expired");
+            throw MESSAGES.timerHasExpired();
         if (timerState == TimerState.CANCELED)
-            throw new NoSuchObjectLocalException("Timer was canceled");
+            throw MESSAGES.timerWasCanceled();
         final InterceptorContext ctx = CurrentInvocationContext.get();
         if(ctx != null) {
             if(ctx.getPrivateData(Component.class) instanceof StatefulSessionComponent) {
@@ -515,7 +514,7 @@ public class TimerImpl implements Timer {
      * Expire, and remove it from the timer service.
      */
     public void expireTimer() {
-        logger.debug("expireTimer: " + this);
+        ROOT_LOGGER.debug("expireTimer: " + this);
         setTimerState(TimerState.EXPIRED);
         // remove from timerservice
         timerService.removeTimer(this);
@@ -537,7 +536,7 @@ public class TimerImpl implements Timer {
      */
     public TimerEntity getPersistentState() {
         if (this.persistent == false) {
-            throw new IllegalStateException("Timer " + this + " is not persistent");
+            throw MESSAGES.failToPersistTimer(this);
         }
         if (this.persistentState == null) {
             // create a new new persistent state
@@ -664,7 +663,7 @@ public class TimerImpl implements Timer {
         try {
             tx.registerSynchronization(new TimerCancellationTransactionSynchronization(this));
         } catch (Exception e) {
-            throw new RuntimeException("Could not register with tx for timer cancellation: ", e);
+            throw MESSAGES.failToRegisterWithTxTimerCancellation(e);
         }
     }
 
@@ -677,9 +676,9 @@ public class TimerImpl implements Timer {
             ObjectInputStream ois = new ObjectInputStreamWithTCCL(bais);
             return (Serializable) ois.readObject();
         } catch (IOException ioe) {
-            throw new RuntimeException("Could not deserialize info in timer", ioe);
+            throw MESSAGES.failToDeserializeInfoInTimer(ioe);
         } catch (ClassNotFoundException cnfe) {
-            throw new RuntimeException("Could not deserialize info in timer", cnfe);
+            throw MESSAGES.failToDeserializeInfoInTimer(cnfe);
         }
     }
 
@@ -699,7 +698,7 @@ public class TimerImpl implements Timer {
             String className = v.getName();
             Class<?> resolvedClass = null;
 
-            logger.trace("Attempting to locate class [" + className + "]");
+            ROOT_LOGGER.trace("Attempting to locate class [" + className + "]");
 
             try {
                 resolvedClass = timedObjectInvoker.getClassLoader().loadClass(className);
@@ -719,7 +718,7 @@ public class TimerImpl implements Timer {
 
         public TimerCancellationTransactionSynchronization(TimerImpl timer) {
             if (timer == null) {
-                throw new IllegalStateException("Timer cannot be null");
+                throw MESSAGES.timerIsNull();
             }
             this.timer = timer;
         }
@@ -727,7 +726,7 @@ public class TimerImpl implements Timer {
         @Override
         public void afterCompletion(int status) {
             if (status == Status.STATUS_COMMITTED) {
-                logger.debug("commit timer cancellation: " + this.timer);
+                ROOT_LOGGER.debug("commit timer cancellation: " + this.timer);
 
                 final TimerState timerState = this.timer.getState();
                 switch (timerState) {
@@ -740,7 +739,7 @@ public class TimerImpl implements Timer {
 
                 }
             } else if (status == Status.STATUS_ROLLEDBACK) {
-                logger.debug("rollback timer cancellation: " + this.timer);
+                ROOT_LOGGER.debug("rollback timer cancellation: " + this.timer);
 
                 TimerState timerState = this.timer.getState();
                 switch (timerState) {
