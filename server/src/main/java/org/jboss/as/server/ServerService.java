@@ -28,9 +28,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.jboss.as.controller.AbstractControllerService;
@@ -106,6 +106,7 @@ import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceListener;
+import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
@@ -191,7 +192,8 @@ public final class ServerService extends AbstractControllerService {
 //        final QueuelessThreadPoolService serverExecutorService = new QueuelessThreadPoolService(Integer.MAX_VALUE, false, new TimeSpec(TimeUnit.SECONDS, 5));
 //        serverExecutorService.getThreadFactoryInjector().inject(threadFactory);
         final ServerExecutorService serverExecutorService = new ServerExecutorService(threadFactory);
-        serviceTarget.addService(Services.JBOSS_SERVER_EXECUTOR, serverExecutorService).install();
+        ServiceName alias = org.jboss.as.domain.management.Services.getDomainManagementExecutorServiceName();
+        serviceTarget.addService(Services.JBOSS_SERVER_EXECUTOR, serverExecutorService).addAliases(alias).install();
 
         DelegatingResourceDefinition rootResourceDefinition = new DelegatingResourceDefinition();
         ServerService service = new ServerService(configuration, processState, null, bootstrapListener, rootResourceDefinition, runningModeControl, vaultReader);
@@ -355,10 +357,10 @@ public final class ServerService extends AbstractControllerService {
     }
 
     /** Temporary replacement for QueuelessThreadPoolService */
-    private static class ServerExecutorService implements Service<ExecutorService> {
+    private static class ServerExecutorService implements Service<ScheduledExecutorService> {
 
         private final ThreadFactory threadFactory;
-        private ExecutorService executorService;
+        private ScheduledThreadPoolExecutor executorService;
 
         private ServerExecutorService(ThreadFactory threadFactory) {
             this.threadFactory = threadFactory;
@@ -366,8 +368,8 @@ public final class ServerService extends AbstractControllerService {
 
         @Override
         public synchronized void start(StartContext context) throws StartException {
-            executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 20L, TimeUnit.SECONDS,
-                    new SynchronousQueue<Runnable>(), threadFactory);
+            executorService = new ScheduledThreadPoolExecutor(0, threadFactory);
+            executorService.setKeepAliveTime(20L, TimeUnit.SECONDS);
         }
 
         @Override
@@ -391,7 +393,7 @@ public final class ServerService extends AbstractControllerService {
         }
 
         @Override
-        public synchronized ExecutorService getValue() throws IllegalStateException, IllegalArgumentException {
+        public synchronized ScheduledExecutorService getValue() throws IllegalStateException, IllegalArgumentException {
             return executorService;
         }
     }
