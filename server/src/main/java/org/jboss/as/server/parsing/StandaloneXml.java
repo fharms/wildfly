@@ -332,7 +332,7 @@ public class StandaloneXml extends CommonXml implements ManagementXml.Delegate {
 
         if (element == Element.MANAGEMENT) {
             ManagementXml managementXml = new ManagementXml(this);
-            managementXml.parseManagement(reader, address, namespace, list, true, false);
+            managementXml.parseManagement(reader, address, namespace, list, true, false,false);
             element = nextElement(reader, namespace);
         }
         // Single profile
