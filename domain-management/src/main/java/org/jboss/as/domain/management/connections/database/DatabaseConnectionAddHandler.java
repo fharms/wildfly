@@ -67,7 +67,7 @@ public class DatabaseConnectionAddHandler extends AbstractAddStepHandler {
         ModelNode fullModel = Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS));
 
         final ServiceTarget serviceTarget = context.getServiceTarget();
-        final DatabaseConnectionManagerService connectionManagerService = new DatabaseConnectionManagerService(false);
+        final DatabaseConnectionManagerService connectionManagerService = new DatabaseConnectionManagerService();
 
         ServiceBuilder<ConnectionManager> serviceBuilder = serviceTarget.addService(DatabaseConnectionManagerService.BASE_SERVICE_NAME.append(name), connectionManagerService)
         .setInitialMode(ServiceController.Mode.ON_DEMAND);

@@ -745,7 +745,7 @@ public class ManagementXml {
     private void parseDatabaseAuthentication(XMLExtendedStreamReader reader, Namespace expectedNs, ModelNode realmAddress,
                                              List<ModelNode> list, boolean allowDataSourceConnection) throws XMLStreamException {
         ModelNode databaseAuthentication = parseDatabase(reader, realmAddress, list, AUTHENTICATION);
-
+        Set<Element> requiredElements = EnumSet.of(Element.DATABASE_OUTBOUND_CONNECTION);
         boolean choiceFound = false;
 
         while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
@@ -753,27 +753,22 @@ public class ManagementXml {
             if (choiceFound) {
                 throw unexpectedElement(reader);
             }
-            choiceFound = true;
 
             requireNamespace(reader, expectedNs);
             final Element element = Element.forName(reader.getLocalName());
-
+            requiredElements.remove(element);
             switch (element) {
                 case DATABASE_OUTBOUND_CONNECTION:
                     parseDatabaseConnectionRef(reader, databaseAuthentication, Attribute.REF, DatabaseResourceDefinition.DATABASE_CONNECTION);
                     break;
-                case JNDI_DATASOURCE:
-                    if (!allowDataSourceConnection) {
-                        throw unexpectedElement(reader);
-                    }
-                    parseDatabaseConnectionRef(reader, databaseAuthentication, Attribute.JNDI_NAME, DatabaseResourceDefinition.DATASOURCE_JNDI_NAME);
-                    break;
                 case SIMPLE_SELECT:
+                    choiceFound = true;
                     DatabaseAuthenticationResourceDefinition.SIMPLE_SELECT_USERS_FIELD.parseAndSetParameter(Boolean.toString(true), databaseAuthentication, reader);
                     Set<Attribute> required = EnumSet.of(Attribute.NAME, Attribute.USERNAME_FIELD,Attribute.PASSWORD_FIELD);
                     parseSimpleSelect(reader, databaseAuthentication, list, required);
                     break;
                 case SQL_SELECT: {
+                    choiceFound = true;
                     final String sql = reader.getElementText();
                     DatabaseAuthenticationResourceDefinition.SQL_SELECT_USERS.parseAndSetParameter(sql, databaseAuthentication, reader);
                     break;
@@ -785,6 +780,10 @@ public class ManagementXml {
         }
         if (!choiceFound) {
             throw missingOneOf(reader, EnumSet.of(Element.SIMPLE_SELECT, Element.SQL_SELECT));
+        }
+
+        if (requiredElements.size() > 0) {
+            throw missingRequired(reader, requiredElements);
         }
     }
 
@@ -1828,36 +1827,32 @@ public class ManagementXml {
     private void parseDatabaseAuthorization(XMLExtendedStreamReader reader, Namespace expectedNs, ModelNode realmAddress,
                                             List<ModelNode> list, boolean allowDataSourceConnection) throws XMLStreamException {
         ModelNode databaseAuthorization = parseDatabase(reader, realmAddress, list,AUTHORIZATION);
-
+        Set<Element> requiredElements = EnumSet.of(Element.DATABASE_OUTBOUND_CONNECTION);
         boolean choiceFound = false;
 
         while (reader.hasNext() && reader.nextTag() != END_ELEMENT) {
             if (choiceFound) {
                 throw unexpectedElement(reader);
             }
-            choiceFound = true;
+
             requireNamespace(reader, expectedNs);
             final Element element = Element.forName(reader.getLocalName());
+            requiredElements.remove(element);
             switch (element) {
                 case DATABASE_OUTBOUND_CONNECTION:
                     parseDatabaseConnectionRef(reader, databaseAuthorization, Attribute.REF, DatabaseResourceDefinition.DATABASE_CONNECTION);
                     break;
-                case JNDI_DATASOURCE:
-                    if (!allowDataSourceConnection) {
-                        throw unexpectedElement(reader);
-                    }
-                    parseDatabaseConnectionRef(reader, databaseAuthorization, Attribute.JNDI_NAME, DatabaseResourceDefinition.DATASOURCE_JNDI_NAME);
-                    break;
                 case SIMPLE_SELECT:
+                    choiceFound = true;
                     DatabaseAuthorizationResourceDefinition.SIMPLE_SELECT_ROLES_FIELD.parseAndSetParameter(Boolean.toString(true), databaseAuthorization, reader);
                     Set<Attribute> required = EnumSet.of(Attribute.NAME, Attribute.USERNAME_FIELD,Attribute.ROLES_FILED);
                     parseSimpleSelect(reader, databaseAuthorization, list,required);
                     break;
-                case SQL_SELECT: {
+                case SQL_SELECT:
+                    choiceFound = true;
                     final String sql = reader.getElementText();
                     DatabaseAuthorizationResourceDefinition.SQL_SELECT_ROLES.parseAndSetParameter(sql, databaseAuthorization, reader);
                     break;
-                }
                 default: {
                     throw unexpectedElement(reader);
                 }
@@ -1865,6 +1860,10 @@ public class ManagementXml {
         }
         if (!choiceFound) {
             throw missingOneOf(reader, EnumSet.of(Element.SIMPLE_SELECT, Element.SQL_SELECT));
+        }
+
+        if (requiredElements.size() > 0) {
+            throw missingRequired(reader, requiredElements);
         }
     }
 
@@ -2175,8 +2174,6 @@ public class ManagementXml {
 
             // Only one of the next 2 will actually write
             DatabaseAuthenticationResourceDefinition.DATABASE_CONNECTION.marshallAsElement(database, writer);
-            DatabaseAuthenticationResourceDefinition.DATASOURCE_JNDI_NAME.marshallAsElement(database, writer);
-
             DatabaseAuthenticationResourceDefinition.PLAIN_TEXT.marshallAsAttribute(database, writer);
 
             if (DatabaseAuthenticationResourceDefinition.TABLE_FIELD.isMarshallable(database)) {
@@ -2246,8 +2243,6 @@ public class ManagementXml {
 
             // Only one of the next 2 will actually write
             DatabaseAuthenticationResourceDefinition.DATABASE_CONNECTION.marshallAsElement(database, writer);
-            DatabaseAuthenticationResourceDefinition.DATASOURCE_JNDI_NAME.marshallAsElement(database, writer);
-
             if (DatabaseAuthorizationResourceDefinition.TABLE_FIELD.isMarshallable(database)) {
                 writer.writeEmptyElement(Element.SIMPLE_SELECT.getLocalName());
                 DatabaseAuthorizationResourceDefinition.TABLE_FIELD.marshallAsAttribute(database, writer);

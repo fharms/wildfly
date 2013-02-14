@@ -47,8 +47,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.sql.DataSource;
-
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
@@ -220,24 +218,8 @@ public class SecurityRealmAddHandler implements OperationStepHandler {
 
         final ServiceName connMgrName;
         ModelNode connectionManagerNode =  DatabaseResourceDefinition.DATABASE_CONNECTION.resolveModelAttribute(context, database);
-        if (connectionManagerNode.isDefined()) {
-            // Inject outbound database connection
-            connMgrName = DatabaseConnectionManagerService.BASE_SERVICE_NAME.append(connectionManagerNode.asString());
-        } else {
-            // Inject datasource subsystem datasource
-            String dsName = DatabaseResourceDefinition.DATASOURCE_JNDI_NAME.resolveModelAttribute(context, database).asString();
-            final DatabaseConnectionManagerService connectionManagerService = new DatabaseConnectionManagerService(true);
-            connMgrName = realmServiceName.append("connection-manager", "authentication");
-            ServiceBuilder<ConnectionManager> connMgrBuilder = serviceTarget.addService(connMgrName, connectionManagerService)
-                    .setInitialMode(ServiceController.Mode.ON_DEMAND);
-
-            ServiceName datasourceService = ServiceName.JBOSS.append("data-source").append(dsName);
-            connMgrBuilder.addDependency(datasourceService, DataSource.class, connectionManagerService.getDatasource());
-            final ServiceController<?> connMgrController = databaseBuilder.setInitialMode(ON_DEMAND).install();
-            if(newControllers != null) {
-                newControllers.add(connMgrController);
-            }
-        }
+        // Inject outbound database connection
+        connMgrName = DatabaseConnectionManagerService.BASE_SERVICE_NAME.append(connectionManagerNode.asString());
         databaseBuilder.addDependency(connMgrName, ConnectionManager.class, databaseCallbackHandler.getConnectionManagerInjector());
 
         final ServiceController<?> serviceController = databaseBuilder.setInitialMode(ON_DEMAND).install();
@@ -268,24 +250,8 @@ public class SecurityRealmAddHandler implements OperationStepHandler {
 
         final ServiceName connMgrName;
         ModelNode connectionManagerNode =  DatabaseResourceDefinition.DATABASE_CONNECTION.resolveModelAttribute(context, database);
-        if (connectionManagerNode.isDefined()) {
-            // Inject outbound database connection
-            connMgrName = DatabaseConnectionManagerService.BASE_SERVICE_NAME.append(connectionManagerNode.asString());
-        } else {
-            // Inject datasource subsystem datasource
-            String dsName = DatabaseResourceDefinition.DATASOURCE_JNDI_NAME.resolveModelAttribute(context, database).asString();
-            final DatabaseConnectionManagerService connectionManagerService = new DatabaseConnectionManagerService(true);
-            connMgrName = realmServiceName.append("connection-manager", "authorization");
-            ServiceBuilder<ConnectionManager> connMgrBuilder = serviceTarget.addService(connMgrName, connectionManagerService)
-                    .setInitialMode(ServiceController.Mode.ON_DEMAND);
-
-            ServiceName datasourceService = ServiceName.JBOSS.append("data-source").append(dsName);
-            connMgrBuilder.addDependency(datasourceService, DataSource.class, connectionManagerService.getDatasource());
-            final ServiceController<?> connMgrController = databaseBuilder.setInitialMode(ON_DEMAND).install();
-            if(newControllers != null) {
-                newControllers.add(connMgrController);
-            }
-        }
+        // Inject outbound database connection
+        connMgrName = DatabaseConnectionManagerService.BASE_SERVICE_NAME.append(connectionManagerNode.asString());
         databaseBuilder.addDependency(connMgrName, ConnectionManager.class, databaseSubjectSupplemental.getConnectionManagerInjector());
 
         final ServiceController<?> serviceController = databaseBuilder.setInitialMode(ON_DEMAND).install();

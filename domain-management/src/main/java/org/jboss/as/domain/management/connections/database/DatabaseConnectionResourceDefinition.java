@@ -59,23 +59,6 @@ public class DatabaseConnectionResourceDefinition extends SimpleResourceDefiniti
 
     public static final PathElement RESOURCE_PATH = PathElement.pathElement(ModelDescriptionConstants.DATABASE_CONNECTION);
 
-//    public static final SimpleAttributeDefinition DATA_SOURCE =
-//            new SimpleAttributeDefinitionBuilder(ModelDescriptionConstants.DATA_SOURCE, ModelType.STRING, false)
-//            .setXmlName(Attribute.REF.getLocalName())
-//            .setAlternatives(ModelDescriptionConstants.CONNECTION_URL, ModelDescriptionConstants.URL_DELIMITER,
-//                    ModelDescriptionConstants.DRIVER_MODULE_NAME, ModelDescriptionConstants.DRIVER_CLASS_NAME,
-//                    ModelDescriptionConstants.USERNAME, ModelDescriptionConstants.PASSWORD,
-//                    ModelDescriptionConstants.MAX_POOL_SIZE, ModelDescriptionConstants.MIN_POOL_SIZE,
-//                    ModelDescriptionConstants.BACKGROUND_VALIDATION, ModelDescriptionConstants.BACKGROUND_VALIDATION_MILLIS,
-//                    ModelDescriptionConstants.BLOCKING_TIMEOUT_WAIT_MILLIS, ModelDescriptionConstants.CHECK_VALID_CONNECTION_SQL,
-//                    ModelDescriptionConstants.IDLE_TIMEOUT_MINUTES, ModelDescriptionConstants.NEW_CONNECTION_SQL,
-//                    ModelDescriptionConstants.POOL_PREFILL, ModelDescriptionConstants.POOL_USE_STRICT_MIN,
-//                    ModelDescriptionConstants.VALIDATE_ON_MATCH, ModelDescriptionConstants.VALID_CONNECTION_CHECKER_CLASS_NAME,
-//                    ModelDescriptionConstants.VALID_CONNECTION_CHECKER_MODULE_NAME, ModelDescriptionConstants.VALID_CONNECTION_CHECKER_PROPERTIES,
-//                    ModelDescriptionConstants.USE_FAST_FAIL)
-//            .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-//            .build();
-
     public static final SimpleAttributeDefinition CONNECTION_URL =
             new SimpleAttributeDefinitionBuilder(ModelDescriptionConstants.CONNECTION_URL, ModelType.STRING, false)
             .setAllowExpression(true)

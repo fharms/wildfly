@@ -68,7 +68,7 @@ public class DatabaseAuthenticationResourceDefinition extends DatabaseResourceDe
             .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES).build();
 
     public static final AttributeDefinition[] ATTRIBUTE_DEFINITIONS = {
-            DATABASE_CONNECTION, DATASOURCE_JNDI_NAME, PLAIN_TEXT, SIMPLE_SELECT_USERS_FIELD, SQL_SELECT_USERS, USERNAME_FIELD, PASSWORD_FIELD,TABLE_FIELD
+            DATABASE_CONNECTION, PLAIN_TEXT, SIMPLE_SELECT_USERS_FIELD, SQL_SELECT_USERS, USERNAME_FIELD, PASSWORD_FIELD,TABLE_FIELD
     };
 
     public DatabaseAuthenticationResourceDefinition() {

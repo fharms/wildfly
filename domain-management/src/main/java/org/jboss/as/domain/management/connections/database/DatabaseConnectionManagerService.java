@@ -49,10 +49,8 @@ public class DatabaseConnectionManagerService implements Service<ConnectionManag
     private final InjectedValue<DataSource> dataSource = new InjectedValue<DataSource>();
     private final InjectedValue<PoolConfiguration> poolConfig = new InjectedValue<PoolConfiguration>();
     private final InjectedValue<ScheduledExecutorService> executorService = new InjectedValue<ScheduledExecutorService>();
-    private final boolean useDataSource;
 
-    public DatabaseConnectionManagerService(boolean useDataSource) {
-        this.useDataSource = useDataSource;
+    public DatabaseConnectionManagerService() {
     }
 
     /*
@@ -60,31 +58,22 @@ public class DatabaseConnectionManagerService implements Service<ConnectionManag
     */
 
     public synchronized void start(StartContext context) throws StartException {
-
-        if (useDataSource) {
-            connectionManager = new DatasourceConnectionManager(getDatasource().getValue());
-        } else {
-            connectionManager = new DatabaseConnectionPool(poolConfig.getValue(), executorService.getValue());
-        }
+        connectionManager = new DatabaseConnectionPool(poolConfig.getValue(), executorService.getValue());
         connectionManager.start();
     }
 
     public synchronized void stop(final StopContext context) {
-        if (useDataSource) {
-            connectionManager.stop();
-        } else {
-            context.asynchronous();
-            executorService.getValue().execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        connectionManager.stop();
-                    } finally {
-                        context.complete();
-                    }
+        context.asynchronous();
+        executorService.getValue().execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    connectionManager.stop();
+                } finally {
+                    context.complete();
                 }
-            });
-        }
+            }
+        });
     }
 
     public synchronized ConnectionManager getValue() throws IllegalStateException, IllegalArgumentException {
