@@ -22,6 +22,7 @@
 
 package org.jboss.as.domain.management.security;
 
+import org.jboss.as.controller.ControllerMessages;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
@@ -38,6 +39,47 @@ public class SecurityRealmChildRemoveHandler extends SecurityRealmParentRestartH
 
     public SecurityRealmChildRemoveHandler(boolean validateAuthentication) {
         this.validateAuthentication = validateAuthentication;
+    }
+
+
+//    @Override
+//    public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
+//        final ModelNode model = Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS));
+//        context.removeResource(PathAddress.EMPTY_ADDRESS);
+//        context.addStep(new OperationStepHandler() {
+//            @Override
+//            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
+//                final boolean reloadRequired = ManagementUtil.isSecurityRealmReloadRequired(context, operation);
+//                final String realmName = ManagementUtil.getSecurityRealmName(operation);
+//                if (reloadRequired) {
+//                    context.reloadRequired();
+//                } else {
+//                    ServiceName realmServiceName = SecurityRealmService.BASE_SERVICE_NAME.append(realmName);
+//                    context.removeService(realmServiceName.append(FileKeystoreService.TRUSTSTORE_SUFFIX));
+//                    //removeServices(context, realmName, model);
+//                }
+//
+//                context.completeStep(new OperationContext.RollbackHandler() {
+//                    @Override
+//                    public void handleRollback(OperationContext context, ModelNode operation) {
+//                        if (reloadRequired) {
+//                            context.revertReloadRequired();
+//                        } else {
+//                            recoverServices(context, realmName, model);
+//                        }
+//                    }
+//                });
+//            }
+//        }, OperationContext.Stage.RUNTIME);
+//        context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
+//    }
+
+    protected void recoverServices(OperationContext context, final String realmName, ModelNode model) {
+        try {
+            SecurityRealmAddHandler.INSTANCE.installServices(context, realmName, model, null, null);
+        } catch (OperationFailedException e) {
+            throw ControllerMessages.MESSAGES.failedToRecoverServices(e);
+        }
     }
 
     @Override
