@@ -796,6 +796,28 @@ public interface DomainManagementMessages {
     @Message(id = Message.NONE, value = "Are you sure you want to set the realm to '%s'")
     String realmConfirmation(final String chosenRealm);
 
+    /**
+     * Creates an exception indicate it's unable to load the key trust file
+     * @return {@link IllegalStateException}
+     */
+    @Message(id = 15270, value = "Unable to load key trust file.")
+    IllegalStateException unableToLoadKeyTrustFile();
+
+    /**
+     * Creates an exception indicate it's unable to operate on the trust store
+     * @return {@link IllegalStateException}
+     */
+    @Message(id = 15271, value = "Unable to operate on trust store")
+    IllegalStateException unableToOperateOnTrustStore(@Cause Throwable cause);
+
+    /**
+     * Creates an exception indicate it can't create a delegated trust manager
+     * @return {@link IllegalStateException}
+     */
+    @Message(id = 15272, value = "Unable to create delegate trust manager.")
+    IllegalStateException unableToCreateTrustManager();
+
+
     /*
      * Logging IDs 15200 to 15299 are reserved for domain management, the file DomainManagementLogger also contains messages in
      * this range commencing 15200.

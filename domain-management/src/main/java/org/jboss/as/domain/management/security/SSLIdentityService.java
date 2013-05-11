@@ -39,6 +39,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
+import org.jboss.as.domain.management.DomainManagementMessages;
 import org.jboss.as.domain.management.SSLIdentity;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.StartContext;
@@ -177,7 +178,7 @@ class SSLIdentityService implements Service<SSLIdentity>, SSLIdentity {
                 try {
                     theTrustStore.load();
                 } catch (StartException e1) {
-                    throw new IllegalStateException("Unable to load key trust file.");
+                    throw DomainManagementMessages.MESSAGES.unableToLoadKeyTrustFile();
                 }
                 try {
                     trustManagerFactory.init(theTrustStore.getKeyStore());
@@ -189,12 +190,12 @@ class SSLIdentityService implements Service<SSLIdentity>, SSLIdentity {
                         }
                     }
                 } catch (GeneralSecurityException e) {
-                    throw new IllegalStateException("Unable to operate on trust store.", e);
+                    throw DomainManagementMessages.MESSAGES.unableToOperateOnTrustStore(e);
 
                 }
             }
             if (delegate == null) {
-                throw new IllegalStateException("Unable to create delegate trust manager.");
+                throw DomainManagementMessages.MESSAGES.unableToCreateTrustManager();
             }
 
             return delegate;
